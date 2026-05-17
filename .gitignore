@@ -1,0 +1,15 @@
+# Binary
+fleetify
+
+# Environment
+.env
+
+# Go
+vendor/
+
+# Docker volumes (local)
+mysql_data/
+
+# OS
+.DS_Store
+Thumbs.db
