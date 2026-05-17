@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="id">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Fleetify - Fleet Maintenance</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
+            rel="stylesheet"
+        />
+        <link href="/css/style.css" rel="stylesheet" />
+    </head>
+    <body>
+        <!-- NAVBAR -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container-fluid">
+                <span class="navbar-brand fw-bold"> <i class="bi bi-truck"></i> Fleetify </span>
+                <div class="ms-auto d-flex align-items-center gap-3">
+                    <span class="text-white-50 small">Login sebagai:</span>
+                    <select id="userSelect" class="form-select form-select-sm" style="width: auto">
+                        <option value="">-- Pilih User --</option>
+                    </select>
+                    <span id="userBadge" class="badge bg-warning text-dark d-none"></span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <div class="container-fluid mt-4 px-4">
+            <!-- ALERT GLOBAL -->
+            <div id="globalAlert" class="d-none"></div>
+
+            <!-- TABS NAVIGASI -->
+            <ul class="nav nav-tabs mb-4" id="mainTabs">
+                <li class="nav-item">
+                    <button class="nav-link active" data-tab="history">
+                        <i class="bi bi-list-ul"></i> Riwayat Laporan
+                    </button>
+                </li>
+                <li class="nav-item" id="tabCreateBtn">
+                    <button class="nav-link" data-tab="create">
+                        <i class="bi bi-plus-circle"></i> Buat Laporan
+                    </button>
+                </li>
+            </ul>
+
+            <!-- TAB: RIWAYAT LAPORAN -->
+            <div id="tabHistory" class="tab-content-panel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Riwayat Laporan Pemeliharaan</h5>
+                    <button id="btnExportCSV" class="btn btn-success btn-sm">
+                        <i class="bi bi-download"></i> Export CSV
+                    </button>
+                </div>
+
+                <!-- Filter Status -->
+                <div class="mb-3">
+                    <div class="btn-group btn-group-sm" id="statusFilter">
+                        <button class="btn btn-outline-secondary active" data-status="">
+                            Semua
+                        </button>
+                        <button class="btn btn-outline-warning" data-status="PENDING_APPROVAL">
+                            Pending
+                        </button>
+                        <button class="btn btn-outline-primary" data-status="APPROVED">
+                            Disetujui
+                        </button>
+                        <button class="btn btn-outline-success" data-status="COMPLETED">
+                            Selesai
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle" id="reportTable">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>ID</th>
+                                <th>Tanggal</th>
+                                <th>SA</th>
+                                <th>No. Polisi</th>
+                                <th>Keluhan</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody"></tbody>
+                    </table>
+                </div>
+                <p id="noReportMsg" class="text-muted text-center d-none">Belum ada laporan.</p>
+            </div>
+
+            <!-- TAB: BUAT LAPORAN (hanya SA) -->
+            <div id="tabCreate" class="tab-content-panel d-none">
+                <h5 class="mb-4">Buat Laporan Pemeliharaan Baru</h5>
+                <div class="row">
+                    <div class="col-lg-7">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <!-- Pilih Kendaraan -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold"
+                                        >Kendaraan <span class="text-danger">*</span></label
+                                    >
+                                    <select id="vehicleSelect" class="form-select">
+                                        <option value="">-- Pilih Kendaraan --</option>
+                                    </select>
+                                </div>
+
+                                <!-- Odometer -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold"
+                                        >Odometer (km) <span class="text-danger">*</span></label
+                                    >
+                                    <input
+                                        type="number"
+                                        id="odometerInput"
+                                        class="form-control"
+                                        placeholder="contoh: 15000"
+                                        min="1"
+                                    />
+                                </div>
+
+                                <!-- Keluhan -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold"
+                                        >Keluhan <span class="text-danger">*</span></label
+                                    >
+                                    <textarea
+                                        id="complaintInput"
+                                        class="form-control"
+                                        rows="3"
+                                        placeholder="Deskripsikan keluhan kendaraan..."
+                                    ></textarea>
+                                </div>
+
+                                <!-- Simulasi Foto -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold"
+                                        >Foto Awal (simulasi)</label
+                                    >
+                                    <input
+                                        type="text"
+                                        id="initialPhotoInput"
+                                        class="form-control"
+                                        placeholder="contoh: foto_awal_avanza.jpg"
+                                    />
+                                    <div class="form-text">Simulasi nama file foto.</div>
+                                </div>
+
+                                <!-- Daftar Item -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold"
+                                        >Estimasi Part / Jasa
+                                        <span class="text-danger">*</span></label
+                                    >
+                                    <div id="itemList"></div>
+                                    <button
+                                        type="button"
+                                        id="btnAddItem"
+                                        class="btn btn-outline-primary btn-sm mt-2"
+                                    >
+                                        <i class="bi bi-plus"></i> Tambah Item
+                                    </button>
+                                </div>
+
+                                <!-- Total Estimasi -->
+                                <div class="alert alert-info py-2">
+                                    <strong>Total Estimasi:</strong>
+                                    <span id="totalEstimation">Rp 0</span>
+                                </div>
+
+                                <button id="btnSubmitReport" class="btn btn-primary w-100">
+                                    <i class="bi bi-send"></i> Kirim Laporan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: Detail Laporan -->
+        <div class="modal fade" id="reportDetailModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-file-text"></i> Detail Laporan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="reportDetailBody"></div>
+                    <div class="modal-footer" id="reportDetailFooter"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: Selesaikan Laporan (upload proof) -->
+        <div class="modal fade" id="completeModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Selesaikan Laporan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label class="form-label">Foto Bukti Pengerjaan (simulasi)</label>
+                        <input
+                            type="text"
+                            id="proofPhotoInput"
+                            class="form-control"
+                            placeholder="contoh: bukti_selesai.jpg"
+                        />
+                    </div>
+                    <div class="modal-footer">
+                        <button id="btnConfirmComplete" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Konfirmasi Selesai
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="/js/api.js"></script>
+        <script src="/js/ui.js"></script>
+        <script src="/js/export.js"></script>
+        <script src="/js/app.js"></script>
+    </body>
+</html>
