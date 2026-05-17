@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: mysql:8.0
+    container_name: fleetify_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-fleetify_db}
+      MYSQL_USER: ${DB_USER:-fleetify_user}
+      MYSQL_PASSWORD: ${DB_PASS:-fleetify_pass}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - fleetify-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASS:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fleetify_app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      APP_PORT: 8080
+      DB_HOST: db          
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-fleetify_db}
+      DB_USER: ${DB_USER:-fleetify_user}
+      DB_PASS: ${DB_PASS:-fleetify_pass}
+      WEBHOOK_URL: ${WEBHOOK_URL:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - fleetify-net
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  fleetify-net:
+    driver: bridge
